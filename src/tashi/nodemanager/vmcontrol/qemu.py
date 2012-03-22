@@ -108,6 +108,15 @@ class Qemu(VmControlInterface):
 		self.consolePortLock = threading.Lock()
 		self.migrationSemaphore = threading.Semaphore(int(self.config.get("Qemu", "maxParallelMigrations")))
 		self.stats = {}
+
+		self.suspendHandler = self.config.get("Qemu", "suspendHandler")
+		if len(self.suspendHandler) == 0:
+			self.suspendHandler = "gzip"
+
+		self.resumeHandler = self.config.get("Qemu", "resumeHandler")
+		if len(self.resumeHandler) == 0:
+			self.resumeHandler = "zcat"
+
 		self.scratchVg = self.config.get("Qemu", "scratchVg")
 		# XXXstroucki revise
 		self.scratchDir = self.config.get("Qemu", "scratchDir")
@@ -653,7 +662,7 @@ class Qemu(VmControlInterface):
 	def suspendVm(self, vmId, target):
 		tmpTarget = "/%s/tashi_qemu_suspend_%d_%d" % (self.scratchDir, os.getpid(), vmId)
 		# XXX: Use fifo to improve performance
-		vmId = self.__stopVm(vmId, "\"exec:gzip -c > %s\"" % (tmpTarget), True)
+		vmId = self.__stopVm(vmId, "\"exec:%s > %s\"" % (self.suspendHandler, tmpTarget), True)
 		self.dfs.copyTo(tmpTarget, target)
 		os.unlink(tmpTarget)
 		return vmId
@@ -680,7 +689,7 @@ class Qemu(VmControlInterface):
 	# extern
 	def resumeVm(self, instance, source):
 		fn = self.dfs.getLocalHandle("%s" % (source))
-		(vmId, cmd) = self.__startVm(instance, "exec:zcat %s" % (fn))
+		(vmId, cmd) = self.__startVm(instance, "exec:%s < %s" % (self.resumeHandler, fn))
 		child = self.__getChildFromPid(vmId)
 		child.cmd = cmd
 		return vmId
