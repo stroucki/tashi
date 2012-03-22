@@ -109,19 +109,18 @@ class Qemu(VmControlInterface):
 		self.migrationSemaphore = threading.Semaphore(int(self.config.get("Qemu", "maxParallelMigrations")))
 		self.stats = {}
 
-		self.suspendHandler = self.config.get("Qemu", "suspendHandler")
-		if len(self.suspendHandler) == 0:
+		self.suspendHandler = self.__config("Qemu", "suspendHandler")
+		self.resumeHandler = self.__config("Qemu", "resumeHandler")
+
+		if self.suspendHandler is None:
 			self.suspendHandler = "gzip"
 
-		self.resumeHandler = self.config.get("Qemu", "resumeHandler")
-		if len(self.resumeHandler) == 0:
+		if self.resumeHandler is None:
 			self.resumeHandler = "zcat"
 
-		self.scratchVg = self.config.get("Qemu", "scratchVg")
-		# XXXstroucki revise
-		self.scratchDir = self.config.get("Qemu", "scratchDir")
-		if len(self.scratchDir) == 0:
-			self.scratchDir = "/tmp"
+		self.scratchVg = self.__config("Qemu", "scratchVg")
+
+		self.scratchDir = self.__config("Qemu", "scratchDir", default = "/tmp")
 
 		try:
 			os.mkdir(self.INFO_DIR)
@@ -137,6 +136,19 @@ class Qemu(VmControlInterface):
 	class anonClass:
 		def __init__(self, **attrs):
 			self.__dict__.update(attrs)
+
+	def __config(self, section, option, default = None):
+		# soft version of self.config.get. returns default value
+		# if not found in configuration
+		import ConfigParser
+
+		value = default
+		try:
+			value = self.config.get(section, option)
+		except ConfigParser.NoOptionError:
+			pass
+
+		return value
 
 	def __dereferenceLink(self, spec):
 		newspec = os.path.realpath(spec)
