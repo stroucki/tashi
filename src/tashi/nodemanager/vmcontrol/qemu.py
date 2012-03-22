@@ -607,10 +607,15 @@ class Qemu(VmControlInterface):
 				# trying to restart the migration by running
 				# the command again (when qemu is ready to
 				# listen again) is probably not helpful
+				# XXXstroucki: failures observed:
+				# "migration failed"
+				# "Block format 'qcow' used by device '' does not support feature 'live migration'
 				success = False
+				# see if migration can be speeded up
+				res = self.__enterCommand(child, "migrate_set_speed 1g", timeout=self.migrateTimeout)
 				res = self.__enterCommand(child, "migrate -i %s" % (target), timeout=self.migrateTimeout)
 				retry = retry - 1
-				if (res.find("migration failed") == -1):
+				if (res.find("Block migration completed") != -1):
 					success = True
 					retry = 0
 					break
