@@ -655,7 +655,8 @@ class Qemu(VmControlInterface):
 	
 	# extern
 	def resumeVmHelper(self, instance, source):
-		child = self.__getChildFromPid(instance.vmId)
+		vmId = instance.vmId
+		child = self.__getChildFromPid(vmId)
 		try:
 			self.__getPtyInfo(child, True)
 		except RuntimeError:
@@ -666,6 +667,8 @@ class Qemu(VmControlInterface):
 		while ("running" not in status):
 			status = self.__enterCommand(child, "info status")
 			time.sleep(1)
+
+		self.nm.vmStateChange(vmId, None, InstanceState.Running)
 		child.instance.state = InstanceState.Running
 		self.__saveChildInfo(child)
 	
