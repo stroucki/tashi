@@ -672,11 +672,17 @@ class Qemu(VmControlInterface):
 	
 	# extern
 	def suspendVm(self, vmId, target):
-		tmpTarget = "/%s/tashi_qemu_suspend_%d_%d" % (self.scratchDir, os.getpid(), vmId)
 		# XXX: Use fifo to improve performance
-		vmId = self.__stopVm(vmId, "\"exec:%s > %s\"" % (self.suspendHandler, tmpTarget), True)
-		self.dfs.copyTo(tmpTarget, target)
-		os.unlink(tmpTarget)
+		# XXXstroucki: we could create a fifo on the local fs,
+		# then start a thread to copy it to dfs. But if we're
+		# reading from dfs directly on resume, why not write
+		# directly here?
+
+		#tmpTarget = "/%s/tashi_qemu_suspend_%d_%d" % (self.scratchDir, os.getpid(), vmId)
+		fn = self.dfs.getLocalHandle("%s" % target)
+		vmId = self.__stopVm(vmId, "\"exec:%s > %s\"" % (self.suspendHandler, fn), True)
+		#self.dfs.copyTo(tmpTarget, target)
+		#os.unlink(tmpTarget)
 		return vmId
 	
 	# extern
