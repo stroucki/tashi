@@ -19,6 +19,8 @@ import logging
 import socket
 import threading
 import time
+import dpkt, pcap, shelve
+from struct import pack
 
 from tashi.rpycservices.rpyctypes import InstanceState, TashiException, Errors, Instance
 from tashi import boolean, vmStates, ConnectionManager
@@ -77,6 +79,7 @@ class NodeManagerService(object):
 		# start service threads
 		threading.Thread(name="registerWithClusterManager", target=self.__registerWithClusterManager).start()
 		threading.Thread(name="statsThread", target=self.__statsThread).start()
+		threading.Thread(name="arpMonitorThread", target=self.__arpMonitorThread, args=(config,)).start()
 
 	def __initAccounting(self):
 		self.accountBuffer = []
@@ -197,6 +200,40 @@ class NodeManagerService(object):
 			toSleep = start - time.time() + self.registerFrequency
 			if (toSleep > 0):
 				time.sleep(toSleep)
+
+	#Convert a string of 6 characters of ethernet address into a dash separated hex string
+	def __eth_addr__ (self, a) :
+		b = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(a[0]) , ord(a[1]) , ord(a[2]), ord(a[3]), ord(a[4]) , ord(a[5]))
+		return b
+
+
+	# service thread function
+	def __arpMonitorThread(self, conf):
+		try:
+			pc = pcap.pcap()
+			pc.setfilter('arp or udp port 67')
+			d = shelve.open('/tmp/mac2ip.db')
+	
+			for ts, pkt in pc:
+				e = dpkt.ethernet.Ethernet(pkt)
+				if e.type == dpkt.ethernet.ETH_TYPE_IP:
+					ip = e.data
+					udp = ip.data
+					dhcp = dpkt.dhcp.DHCP(udp.data)
+					if dhcp.op == dpkt.dhcp.DHCPACK or dhcp.op == dpkt.dhcp.DHCPOFFER:
+						macaddress = self.__eth_addr__(dhcp.chaddr)
+						ipaddress = socket.inet_ntoa(pack("!I",dhcp.ciaddr))
+						self.log.debug('DHCP ' + macaddress + ' > ' + ipaddress)
+						d[macaddress] = ipaddress
+				elif e.type == dpkt.ethernet.ETH_TYPE_ARP:
+					a = e.data
+					if a.op == dpkt.arp.ARP_OP_REPLY:
+						ipaddress = socket.inet_ntoa(a.spa)
+						macaddress = self.__eth_addr__(a.sha)
+						self.log.debug('ARP ' + macaddress + ' > ' + ipaddress)
+						d[macaddress] = ipaddress
+		except:
+			self.log.exception('shuting down pcap')
 
 	# service thread function
 	def __statsThread(self):
