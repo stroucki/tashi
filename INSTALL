@@ -60,7 +60,8 @@ brctl sethello br0 1
 ifdown eth0;ifconfig eth0 0.0.0.0;brctl addif br0 eth0;dhclient br0
 
 # create a script /etc/qemu-ifup.0 which will allow virtual machines
-# to be attached to the default network (0).
+# to be attached to the default network (0). Double check the path
+# e.g. in Debian brctl is in /usr/sbin/brctl
 
 cat /etc/qemu-ifup.0
 #!/bin/sh
