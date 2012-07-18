@@ -19,7 +19,7 @@ import logging
 import socket
 import threading
 import time
-import dpkt, pcap, shelve
+import dpkt, pcap
 from struct import pack
 
 from tashi.rpycservices.rpyctypes import InstanceState, TashiException, Errors, Instance
@@ -206,13 +206,25 @@ class NodeManagerService(object):
 		b = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x" % (ord(a[0]) , ord(a[1]) , ord(a[2]), ord(a[3]), ord(a[4]) , ord(a[5]))
 		return b
 
+	def __updateInstance__ (self, mac, ip) :
+		for vmId in self.instances.keys():
+			try:
+				instance = self.instances.get(vmId, None)
+				if (not instance):
+					continue
+				for i in range(0, len(instance.nics)): 
+					nic = instance.nics[i]
+					if (nic.mac == mac):
+						self.log.debug('Detected IP address:' + ip + ' for hwaddress:' + mac)
+						nic.ip = ip
+			except:
+				self.log.exception('arpMonitorThread threw an exception')
 
 	# service thread function
 	def __arpMonitorThread(self, conf):
 		try:
 			pc = pcap.pcap()
 			pc.setfilter('arp or udp port 67')
-			d = shelve.open('/tmp/mac2ip.db')
 	
 			for ts, pkt in pc:
 				e = dpkt.ethernet.Ethernet(pkt)
@@ -223,15 +235,13 @@ class NodeManagerService(object):
 					if dhcp.op == dpkt.dhcp.DHCPACK or dhcp.op == dpkt.dhcp.DHCPOFFER:
 						macaddress = self.__eth_addr__(dhcp.chaddr)
 						ipaddress = socket.inet_ntoa(pack("!I",dhcp.ciaddr))
-						self.log.debug('DHCP ' + macaddress + ' > ' + ipaddress)
-						d[macaddress] = ipaddress
+						self.__updateInstance__(macaddress, ipaddress)
 				elif e.type == dpkt.ethernet.ETH_TYPE_ARP:
 					a = e.data
 					if a.op == dpkt.arp.ARP_OP_REPLY:
 						ipaddress = socket.inet_ntoa(a.spa)
 						macaddress = self.__eth_addr__(a.sha)
-						self.log.debug('ARP ' + macaddress + ' > ' + ipaddress)
-						d[macaddress] = ipaddress
+						self.__updateInstance__(macaddress, ipaddress)
 		except:
 			self.log.exception('shuting down pcap')
 
