@@ -78,8 +78,11 @@ chmod 700 /etc/qemu-ifup.0
 If you don't have RPyC version 3.1 installed, download a copy from
 http://sourceforge.net/projects/rpyc/files/main/ and install it.
 
-You will also need iPython from http://ipython.org/, although it usually
-come with your Linux distribution
+You will also need iPython from http://ipython.org/, pypcap from 
+http://code.google.com/p/pypcap/ and dpkt from 
+http://code.google.com/p/dpkt/, although they usually
+come with your Linux distribution. Optionaly you can install them using
+easy_install or pip (python package managers)
 
 Prepare a virtual machine image in qcow2 format for Tashi to deploy. You 
 can create this with practically any consumer or professional 
