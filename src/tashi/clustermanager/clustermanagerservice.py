@@ -644,7 +644,7 @@ class ClusterManagerService(object):
 			self.log.exception('vmmSpecificCall failed on host %s with vmId %d' % (hostname, instance.vmId))
 			raise
 		return res
-	
+
 	# extern
 	def registerNodeManager(self, host, instances):
 		"""Called by the NM every so often as a keep-alive/state polling -- state changes here are NOT AUTHORITATIVE"""
