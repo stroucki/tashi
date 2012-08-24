@@ -16,10 +16,12 @@
 # under the License.
 
 import logging
+import threading
+import time
 
-from tashi.util import instantiateImplementation
+from tashi import createClient
 
-class AccountingService(object):
+class SimpleLogger(object):
 	"""RPC service for the Accounting service"""
 
 	def __init__(self, config):
@@ -31,23 +33,27 @@ class AccountingService(object):
 		self.pollSleep = None
 
 		# XXXstroucki new python has fallback values
-		try:			
-			# load hooks
-			items = self.config.items("AccountingService")
-			items.sort()
-			for item in items:
-					(name, value) = item
-					name = name.lower()
-					if (name.startswith("hook")):
-							try:
-									self.hooks.append(instantiateImplementation(value, self.config))
-							except:
-									self.log.exception("Failed to load hook %s" % (value))
+		try:
+			self.pollSleep = self.config.getint("SimpleLogger", "pollSleep")
 		except:
 			pass
 
+		if self.pollSleep is None:
+			self.pollSleep = 600
 
-	# remote
-	def record(self, strings):
-		for string in strings:
-			self.log.info("Remote: %s" % (string))
+		self.cm = createClient(config)
+		threading.Thread(target=self.__start).start()
+
+	def __start(self):
+		while True:
+			try:
+				instances = self.cm.getInstances()
+				for instance in instances:
+					# XXXstroucki this currently duplicates what the CM was doing.
+					self.log.info('Accounting: id %s host %s vmId %s user %s cores %s memory %s' % (instance.id, instance.hostId, instance.vmId, instance.userId, instance.cores, instance.memory))
+			except:
+				self.log.warning("SimpleLogger iteration failed")
+
+
+			# wait to do the next iteration
+			time.sleep(self.pollSleep)
