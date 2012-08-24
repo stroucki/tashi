@@ -260,8 +260,9 @@ class SQL(DataInterface):
 	def getHost(self, in_id):
 		try:
 			_id = int(in_id)
-		except:
+		except TypeError:
 			self.log.exception("Argument to getHost was not integer: %s" % in_id)
+			raise
 
 		cur = self.executeStatement("SELECT * FROM hosts WHERE id = %d" % _id)
 		r = cur.fetchone()
@@ -282,8 +283,9 @@ class SQL(DataInterface):
 	def getInstance(self, in_id):
 		try:
 			_id = int(in_id)
-		except:
+		except TypeError:
 			self.log.exception("Argument to getInstance was not integer: %s" % in_id)
+			raise
 
 		cur = self.executeStatement("SELECT * FROM instances WHERE id = %d" % (_id))
 		# XXXstroucki should only return one row.
@@ -338,6 +340,7 @@ class SQL(DataInterface):
 		
 	def registerHost(self, hostname, memory, cores, version):
 		self.hostLock.acquire()
+		# does this have to be so general?
 		cur = self.executeStatement("SELECT * from hosts")
 		res = cur.fetchall()
 		for r in res:
@@ -354,16 +357,20 @@ class SQL(DataInterface):
 				self.executeStatement("UPDATE hosts SET %s WHERE id = %d" % (s, _id))
 				self.hostLock.release()
 				return r[0], True
+
+		# this is a new host
 		_id = self.getNewId("hosts")
 		host = Host(d={'id': _id, 'up': 0, 'decayed': 0, 'state': 1, 'name': hostname, 'memory':memory, 'cores': cores, 'version':version, 'notes':'', 'reserved':[]})
 		l = self.makeHostList(host)
 		# XXXstroucki nicer?
 		self.executeStatement("INSERT INTO hosts VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % tuple(l))
 		self.hostLock.release()
-		return id, False
+		return _id, False
 	
 	def unregisterHost(self, hostId):
+		# what about VMs that may run on this host?
 		self.hostLock.acquire()
+		# does this have to be so general?
 		cur = self.executeStatement("SELECT * from hosts")
 		res = cur.fetchall()
 		for r in res:

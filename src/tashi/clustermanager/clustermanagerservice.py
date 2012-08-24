@@ -295,7 +295,12 @@ class ClusterManagerService(object):
 
 				instance.decayed = True
 				self.log.debug('Fetching state on instance %s because it is decayed' % (instance.name))
-				if instance.hostId is None: raise AssertionError
+				if instance.hostId is None:
+					# XXXstroucki we should not have reached
+					# here. Log state of instance and raise
+					# an AssertionError
+					self.log.error("Assert failed: hostId is None with instance %s" % instance)
+					raise AssertionError
 
 				# XXXstroucki check if host is down?
 				host = self.data.getHost(instance.hostId)
@@ -599,6 +604,61 @@ class ClusterManagerService(object):
 		return 'Host notes set to "%s".' % hostNotes
 
 	# extern
+	def addReservation(self, hostId, userId):
+		host = self.data.acquireHost(hostId)
+		msg = None
+		user = self.__getUser(userId)
+		try:
+			if userId not in host.reserved:
+				host.reserved.append(userId)
+				msg = "%s added to reservations of host %s" % (user.name, host.name)
+			else:
+				msg = "%s already in reservations of host %s" % (user.name, host.name)
+		finally:
+			self.data.releaseHost(host)
+
+		if msg is not None:
+			return msg
+		else:
+			return "Sorry, an error occurred"
+
+	# extern
+	def delReservation(self, hostId, userId):
+		host = self.data.acquireHost(hostId)
+		msg = None
+		user = self.__getUser(userId)
+		try:
+			if userId not in host.reserved:
+				msg = "%s not in reservations of host %s" % (user.name, host.name)
+			else:
+				host.reserved.remove(userId)
+				msg = "%s removed from reservations of host %s" % (user.name, host.name)
+		finally:
+			self.data.releaseHost(host)
+
+		if msg is not None:
+			return msg
+		else:
+			return "Sorry, an error occurred"
+
+	# extern
+	def getReservation(self, hostId):
+		host = self.data.getHost(hostId)
+		users = host.reserved
+
+		if len(users) == 0:
+			return 'Host %s is not reserved for any users' % (host.name)
+
+		namelist = []
+		for u in users:
+			user = self.__getUser(u)
+			namelist.append(user.name)
+
+		usersstring = ', '.join(map(str, namelist))
+
+		return 'Host %s reserved for users %s.' % (host.name, usersstring)
+
+	# extern
 	def getNetworks(self):
 		networks = self.data.getNetworks()
 		for network in networks:
@@ -610,6 +670,9 @@ class ClusterManagerService(object):
 	# extern
 	def getUsers(self):
 		return self.data.getUsers().values()
+
+	def __getUser(self, userId):
+		return self.data.getUser(userId)
 
 	# extern
 	def getInstances(self):
@@ -846,16 +909,23 @@ class ClusterManagerService(object):
 		except:
 			self.log.warning("Failed to lookup host %s" % hostId)
 
-		return hostId
+		return "Registered host %s with hostId %s" % (host.name, host.id)
 
 	# extern
 	def unregisterHost(self, hostId):
+		# what about VMs that may be running on the host?
+		# what about VMs attempted to be scheduled here once
+		# we've removed it?
+
 		try:
 			host = self.data.getHost(hostId)
 			self.__ACCOUNT("CM HOST UNREGISTER", host=host)
 		except:
 			self.log.warning("Failed to lookup host %s" % hostId)
 			return
+
+		self.log.info("Aborting non-implemented host unregistration for host %s" % host.name)
+		return "Host removal for host %s not implemented yet" % host.name
 
 		self.data.unregisterHost(hostId)
 		self.log.info("Host %s was unregistered" % hostId)

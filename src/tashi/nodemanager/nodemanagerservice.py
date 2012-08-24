@@ -44,6 +44,7 @@ class NodeManagerService(object):
 
 	def __init__(self, config, vmm):
 		# XXXstroucki: vmm will wait for this constructor to complete
+		self.hostname = socket.gethostname()
 		self.config = config
 		self.vmm = vmm
 		self.cmHost = self.config.get("NodeManagerService", "clusterManagerHost")
@@ -76,12 +77,16 @@ class NodeManagerService(object):
 
 		self.id = None
 		# XXXstroucki this fn could be in this level maybe?
+		# note we are passing our information down to the VMM here.
 		self.host = self.vmm.getHostInfo(self)
 
 		# populate self.instances
 		self.__loadVmInfo()
 
-		self.__registerHost()
+		# try to add myself to the list of available hosts
+		# is this useful, or too dangerous to consider?
+		if self.registerHost:
+			self.__registerHost()
 
 		# XXXstroucki: should make an effort to retry
 		# This can time out now with an exception
@@ -226,7 +231,12 @@ class NodeManagerService(object):
 		b = ":".join(s.encode("hex") for s in a)
 		return b
 
-	def __updateInstance(self, mac, ip):
+	def __updateInstanceIp(self, mac, ip):
+		# 0.0.0.0 is sometimes seen when doing DHCP
+		# don't update my info with this address
+		if ip == "0.0.0.0":
+			return
+
 		for vmId in self.instances.keys():
 			try:
 				instance = self.instances.get(vmId, None)
@@ -238,7 +248,7 @@ class NodeManagerService(object):
 						self.log.debug('Detected IP address: %s for hardware address: %s' % (ip, mac))
 						nic.ip = ip
 			except:
-				self.log.exception('updateInstance threw an exception (vmid %d)' % vmId)
+				self.log.exception('updateInstanceIp threw an exception (vmid %d)' % vmId)
 
 	# service thread function
 	def __arpMonitorThread(self, conf):
@@ -256,13 +266,13 @@ class NodeManagerService(object):
 					if dhcp.op == dpkt.dhcp.DHCPACK or dhcp.op == dpkt.dhcp.DHCPOFFER:
 						macaddress = self.__stringToMac(dhcp.chaddr)
 						ipaddress = socket.inet_ntoa(pack("!I",dhcp.ciaddr))
-						self.__updateInstance(macaddress, ipaddress)
+						self.__updateInstanceIp(macaddress, ipaddress)
 				elif e.type == dpkt.ethernet.ETH_TYPE_ARP:
 					a = e.data
 					if a.op == dpkt.arp.ARP_OP_REPLY:
 						ipaddress = socket.inet_ntoa(a.spa)
 						macaddress = self.__stringToMac(a.sha)
-						self.__updateInstance(macaddress, ipaddress)
+						self.__updateInstanceIp(macaddress, ipaddress)
 		except:
 			self.log.exception('arpMonitorThread threw an exception')
 
@@ -293,24 +303,29 @@ class NodeManagerService(object):
 			time.sleep(self.statsInterval)
 
 	def __registerHost(self):
-		hostname = socket.gethostname()
 		# populate some defaults
 		# XXXstroucki: I think it's better if the nodemanager fills these in
 		# properly when registering with the clustermanager
 		memory = 0
 		cores = 0
 		version = "empty"
-		#self.cm.registerHost(hostname, memory, cores, version)
+		rv = self.cm.registerHost(self.hostname, memory, cores, version)
 
 	def __getInstance(self, vmId):
 		instance = self.instances.get(vmId, None)
 		if instance is not None:
+			# XXXstroucki: force to my own hostId here. Is this the
+			# right place?
+			instance.hostId = self.id
 			return instance
 
 		# refresh self.instances if not found
 		self.__loadVmInfo()
 		instance = self.instances.get(vmId, None)
 		if instance is not None:
+			# XXXstroucki: force to my own hostId here. Is this the
+			# right place?
+			instance.hostId = self.id
 			return instance
 
 

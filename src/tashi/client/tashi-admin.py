@@ -24,7 +24,6 @@ from tashi.utils.config import Config
 from tashi.rpycservices.rpyctypes import TashiException
 
 def checkHid(host):
-	#userId = getUser()
 	hosts = client.getHosts()
 	hostId = None
 	try:
@@ -38,6 +37,21 @@ def checkHid(host):
 
 	# XXXstroucki permissions for host related stuff?
 	return hostId
+
+def checkUid(user):
+	users = client.getUsers()
+	userId = None
+	try:
+		userId = int(user)
+	except:
+		for u in users:
+			if (u.name == user):
+				userId = u.id
+	if (userId is None):
+		raise TashiException({'msg':"Unknown user %s" % (str(user))})
+
+	# XXXstroucki permissions for host related stuff?
+	return userId
 
 def remoteCommand(command, *args):
 	global client
@@ -82,6 +96,95 @@ def setHostNotes(args):
 	print rv
 	return 0
 
+def addHost(args):
+	global scriptname
+	parser = optparse.OptionParser()
+	parser.set_usage("%s addHost [options]" % scriptname)
+	parser.add_option("--host", help="Add this host to the cluster (mandatory)", action="store", type="string", dest="hostname")
+	(options, arguments) = parser.parse_args(args)
+	if options.hostname is None:
+		print "A mandatory option is missing\n"
+		parser.print_help()
+		sys.exit(-1)
+
+	# let the NM on the new host fill this in on its regular checkins
+	memory = 0
+	cores = 0
+	version = "new"
+
+	rv = remoteCommand("registerHost", options.hostname, memory, cores, version)
+	print rv
+	return 0
+
+def delHost(args):
+	global scriptname
+	parser = optparse.OptionParser()
+	parser.set_usage("%s delHost [options]" % scriptname)
+	parser.add_option("--host", help="Remove this host from the cluster (mandatory)", action="store", type="string", dest="hostname")
+	(options, arguments) = parser.parse_args(args)
+	if options.hostname is None:
+		print "A mandatory option is missing\n"
+		parser.print_help()
+		sys.exit(-1)
+
+	hostId = checkHid(options.hostname)
+	rv = remoteCommand("unregisterHost", hostId)
+	print rv
+	return 0
+
+def addReservation(args):
+	global scriptname
+	parser = optparse.OptionParser()
+	parser.set_usage("%s addReservation [options]" % scriptname)
+	parser.add_option("--host", help="Add a reservation to this host (mandatory)", action="store", type="string", dest="hostname")
+	parser.add_option("--user", help="Add this user to the host reservation (mandatory)", action="store", type="string", dest="username")
+	(options, arguments) = parser.parse_args(args)
+	if options.hostname is None or options.username is None:
+		print "A mandatory option is missing\n"
+		parser.print_help()
+		sys.exit(-1)
+
+	hostId = checkHid(options.hostname)
+	userId = checkUid(options.username)
+	rv = remoteCommand("addReservation", hostId, userId)
+	print rv
+	return 0
+
+def delReservation(args):
+	global scriptname
+	parser = optparse.OptionParser()
+	parser.set_usage("%s addReservation [options]" % scriptname)
+	parser.add_option("--host", help="Add a reservation to this host (mandatory)", action="store", type="string", dest="hostname")
+	parser.add_option("--user", help="Remove this user from the host reservation (mandatory)", action="store", type="string", dest="username")
+	(options, arguments) = parser.parse_args(args)
+	if options.hostname is None or options.username is None:
+		print "A mandatory option is missing\n"
+		parser.print_help()
+		sys.exit(-1)
+
+	hostId = checkHid(options.hostname)
+	userId = checkUid(options.username)
+
+	rv = remoteCommand("delReservation", hostId, userId)
+	print rv
+	return 0
+
+def getReservation(args):
+	global scriptname
+	parser = optparse.OptionParser()
+	parser.set_usage("%s getReservation [options]" % scriptname)
+	parser.add_option("--host", help="Show reservations on this host (mandatory)", action="store", type="string", dest="hostname")
+	(options, arguments) = parser.parse_args(args)
+	if options.hostname is None:
+		print "A mandatory option is missing\n"
+		parser.print_help()
+		sys.exit(-1)
+
+	hostId = checkHid(options.hostname)
+	rv = remoteCommand("getReservation", hostId)
+	print rv
+	return 0
+
 def help(args):
 	global scriptname
 	print "Available commands:"
@@ -94,6 +197,9 @@ def help(args):
 description = (
 ('addHost', 'Adds a new host to Tashi'),
 ('delHost', 'Removes a host from Tashi'),
+('addReservation', 'Add a user to a host reservation'),
+('delReservation', 'Remove a user from a host reservation'),
+('getReservation', 'Retrieve host reservations'),
 ('addUser', 'Adds a user to Tashi'),
 ('delUser', 'Removes a user from Tashi'),
 ('addNet', 'Adds a network to Tashi'),
@@ -106,12 +212,22 @@ description = (
 cmdsdesc = (
 ("setHostState", "Sets host state"),
 ("setHostNotes", "Annotates a host"),
+("addHost", "Add a host to the cluster"),
+("delHost", "Remove a host from the cluster"),
+('addReservation', 'Add a user to a host reservation'),
+('delReservation', 'Remove a user from a host reservation'),
+('getReservation', 'Retrieve host reservations'),
 ("help", "Get list of available commands"),
 )
 
 cmds = {
 'setHostState': setHostState,
 'setHostNotes': setHostNotes,
+'addHost': addHost,
+'delHost': delHost,
+'addReservation': addReservation,
+'delReservation': delReservation,
+'getReservation': getReservation,
 'help': help,
 }
 

@@ -12,6 +12,25 @@ in the main installation document.
 You can then start the node manager manually, or have it start from the 
 system initialization scripts.
 
+---+ VM host best practices
+
+The nodemanager will use a small amount of local storage to keep 
+accounting data on the virtual machines that it manages. The 
+copy-on-write storage used by running virtual machines will also be 
+written locally. For the sake of stability, these two storage locations 
+should be chosen so that there is always sufficient space for the 
+accounting data. Otherwise, this could lead to VMs running but not known 
+to the nodemanager.
+
+If you are using Qemu/KVM as the hypervisor, be advised that the VM 
+format changes rather quickly. E.g. version 1.1 of Qemu states it will 
+accept migrations in from versions 0.13 to 1.1. Migrations out are 
+liable to be dropped on the floor by a receiving older version Qemu 
+(with a successful return from the sending Qemu). Be careful to only 
+deploy Qemu versions in your cluster that can work together. Since 
+suspend and resume are handled via the same mechanisms, the above caveat 
+applies to these actions too.
+
 ---+ Deployment over multiple networks
 
 To add additional networks to the Apache Tashi cluster, they should be 
