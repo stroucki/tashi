@@ -23,4 +23,4 @@ and changes to instances and hosts.
 To maintain the original functionality:
    * Modify the Accounting.cfg file:
 In Section [AccountingService], add a line like "hook1 = tashi.accounting.SimpleLogger"
-
+In Section [SimpleLogger], add a line like "pollDelay = 600"
