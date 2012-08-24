@@ -22,7 +22,7 @@ import time
 from tashi import createClient
 
 class SimpleLogger(object):
-	"""RPC service for the Accounting service"""
+	"""Simple logger of all VMs the clustermanager knows of"""
 
 	def __init__(self, config):
 		self.log = logging.getLogger(__name__)
@@ -49,7 +49,6 @@ class SimpleLogger(object):
 			try:
 				instances = self.cm.getInstances()
 				for instance in instances:
-					# XXXstroucki this currently duplicates what the CM was doing.
 					self.log.info('Accounting: id %s host %s vmId %s user %s cores %s memory %s' % (instance.id, instance.hostId, instance.vmId, instance.userId, instance.cores, instance.memory))
 			except:
 				self.log.warning("SimpleLogger iteration failed")

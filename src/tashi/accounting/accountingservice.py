@@ -27,6 +27,7 @@ class AccountingService(object):
 		self.log.setLevel(logging.INFO)
 
 		self.config = config
+		self.hooks = []
 
 		self.pollSleep = None
 

@@ -12,3 +12,15 @@ Conversion procedure:
 (id int(11) NOT NULL, vmId int(11), hostId int(11), decayed tinyint(1) NOT NULL, state int(11) NOT NULL, userId int(11), name varchar(256), cores int(11) NOT NULL, memory int(11) NOT NULL, disks varchar(1024) NOT NULL, nics varchar(1024) NOT NULL, hints varchar(1024) NOT NULL, groupName varchar(256))
    * Start the cluster manager
 
+---+++ The accounting service has been split up
+The accounting service has been split into a service which receives calls
+from remote endpoints (AccountingService), and additional active modules
+which can be added as hooks in the accounting configuration. The
+SimpleLogger module duplicates the previous functionality. The newly provided
+ConfigCollector module queries the cluster manager to log additions
+and changes to instances and hosts.
+
+To maintain the original functionality:
+   * Modify the Accounting.cfg file:
+In Section [AccountingService], add a line like "hook1 = tashi.accounting.SimpleLogger"
+

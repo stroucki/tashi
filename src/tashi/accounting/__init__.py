@@ -16,3 +16,5 @@
 # under the License.    
 
 from accountingservice import AccountingService
+from configcollector import ConfigCollector
+from simplelogger import SimpleLogger
