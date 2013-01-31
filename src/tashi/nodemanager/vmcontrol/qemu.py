@@ -628,6 +628,7 @@ class Qemu(VmControlInterface):
 			redirLine = "char device redirected to "
 			if (line.find(redirLine) != -1):
 				ptyFile=line[len(redirLine):].strip()
+				self.log.info("Got pty file for VM:" + ptyFile)
 				break
 		child.ptyFile = ptyFile
 		child.monitorFd = os.open(child.ptyFile, os.O_RDWR | os.O_NOCTTY)
