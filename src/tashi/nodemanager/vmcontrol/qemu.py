@@ -627,7 +627,7 @@ class Qemu(VmControlInterface):
 				raise Exception, "Failed to start VM -- ptyFile not found"
 			redirLine = "char device redirected to "
 			if (line.find(redirLine) != -1):
-				ptyFile=line[len(redirLine):].strip()
+				ptyFile=line[len(redirLine):].split()[0].strip()
 				break
 		child.ptyFile = ptyFile
 		child.monitorFd = os.open(child.ptyFile, os.O_RDWR | os.O_NOCTTY)
