@@ -21,7 +21,7 @@ import os.path
 import random
 import sys
 import types
-from tashi.rpycservices.rpyctypes import NetworkConfiguration,\
+from tashi.rpycservices.rpyctypes import NetworkConfiguration, \
 	DiskConfiguration, HostState, Instance, Host, TashiException
 from tashi.utils.config import Config
 from tashi import vmStates, hostStates, boolean, stringPartition, createClient
@@ -113,18 +113,26 @@ def randomNetwork():
 	return [NetworkConfiguration(d={'mac':randomMac(), 'network':getDefaultNetwork()})]
 
 def parseDisks(arg):
+	validImageNames = []
+	for i in client.getImages():
+		validImageNames.append(i.imageName)
 	try:
 		strDisks = arg.split(",")
 		disks = []
 		for strDisk in strDisks:
 			strDisk = strDisk.strip()
 			(l, __s, r) = stringPartition(strDisk, ":")
+			if not l in validImageNames:
+				raise TashiException({'msg':"Invalid disk image name: %s.  See \"tashi-client getImages\" for a list of valid images." % l})
 			if (r == ""):
 				r = "False"
 			r = boolean(r)
 			disk = DiskConfiguration(d={'uri':l, 'persistent':r})
 			disks.append(disk)
 		return disks
+	except TashiException as e:
+		print e.msg
+		sys.exit(-1)
 	except:
 		raise ValueError("Incorrect format for disks argument")
 
@@ -229,7 +237,7 @@ def __shutdownOrDestroyMany(method, basename):
 	instances = client.getInstances()
 	count = 0
 	for i in instances:
-		if (i.name.startswith(basename + "-") and i.name[len(basename)+1].isdigit()):
+		if (i.name.startswith(basename + "-") and i.name[len(basename) + 1].isdigit()):
 			# checking permissions here
 			checkIid(i.name)
 
@@ -259,10 +267,10 @@ def getMyInstances():
 # Used to define default views on functions and to provide extra functionality (getVmLayout)
 extraViews = {
 'getSlots': (getSlots, None),
-'getImages': (None, ['id', 'imageName', 'imageSize']), 
-'copyImage': (None, None), 
-'cloneImage': (None, None), 
-'rebaseImage': (None, None), 
+'getImages': (None, ['id', 'imageName', 'imageSize']),
+'copyImage': (None, None),
+'cloneImage': (None, None),
+'rebaseImage': (None, None),
 'createVm': (None, ['id', 'hostId', 'name', 'user', 'state', 'disk', 'memory', 'cores']),
 'createMany': (createMany, ['id', 'hostId', 'name', 'user', 'state', 'disk', 'memory', 'cores']),
 'shutdownMany': (shutdownMany, None),
@@ -287,9 +295,9 @@ argLists = {
 'unpauseVm': [('instance', checkIid, lambda: requiredArg('instance'), True)],
 'getSlots': [('cores', int, lambda: 1, False), ('memory', int, lambda: 128, False)],
 'getImages': [],
-'copyImage': [('src', str, lambda: requiredArg('src'),True), ('dst', str, lambda: requiredArg('dst'), True)],
-'cloneImage': [('src', str, lambda: requiredArg('src'),True), ('dst', str, lambda: requiredArg('dst'), True)],
-'rebaseImage': [('src', str, lambda: requiredArg('src'),True), ('dst', str, lambda: requiredArg('dst'), True)],
+'copyImage': [('src', str, lambda: requiredArg('src'), True), ('dst', str, lambda: requiredArg('dst'), True)],
+'cloneImage': [('src', str, lambda: requiredArg('src'), True), ('dst', str, lambda: requiredArg('dst'), True)],
+'rebaseImage': [('src', str, lambda: requiredArg('src'), True), ('dst', str, lambda: requiredArg('dst'), True)],
 'getHosts': [],
 'getUsers': [],
 'getNetworks': [],
@@ -375,7 +383,7 @@ examples = {
 
 show_hide = []
 
-def usage(func = None):
+def usage(func=None):
 	"""Print program usage"""
 	if (func == None or func not in argLists):
 		if (func != None):
@@ -485,18 +493,18 @@ def makeTable(_list, keys=None):
 		widths = maxWidth.items()
 		widths.sort(cmp=lambda x, y: cmp(x[1], y[1]))
 		widths.reverse()
-		maxWidth[widths[0][0]] = widths[0][1]-1
+		maxWidth[widths[0][0]] = widths[0][1] - 1
 		totalWidth = reduce(lambda x, y: x + y + 1, maxWidth.values(), 0)
 	line = ""
 	for k in keys:
 		if (len(str(k)) > maxWidth[k]):
-			line += (" %-" + str(maxWidth[k]-3) + "." + str(maxWidth[k]-3) + "s...") % (k)
+			line += (" %-" + str(maxWidth[k] - 3) + "." + str(maxWidth[k] - 3) + "s...") % (k)
 		else:
 			line += (" %-" + str(maxWidth[k]) + "." + str(maxWidth[k]) + "s") % (k)
 	print line
 	line = ""
 	for k in keys:
-		line += ("-" * (maxWidth[k]+1))
+		line += ("-" * (maxWidth[k] + 1))
 	print line
 	def sortFunction(a, b):
 		av = a.__dict__[keys[0]]
@@ -513,7 +521,7 @@ def makeTable(_list, keys=None):
 		for k in keys:
 			row.__dict__[k] = row.__dict__.get(k, "")
 			if (len(str(row.__dict__[k])) > maxWidth[k]):
-				line += (" %-" + str(maxWidth[k]-3) + "." + str(maxWidth[k]-3) + "s...") % (str(row.__dict__[k]))
+				line += (" %-" + str(maxWidth[k] - 3) + "." + str(maxWidth[k] - 3) + "s...") % (str(row.__dict__[k]))
 			else:
 				line += (" %-" + str(maxWidth[k]) + "." + str(maxWidth[k]) + "s") % (str(row.__dict__[k]))
 		print line
@@ -525,7 +533,7 @@ def simpleType(obj):
 			return True
 	return False
 
-def pprint(obj, depth = 0, key = None):
+def pprint(obj, depth=0, key=None):
 	"""My own version of pprint that prints out a dict in a readable, but slightly more compact format"""
 	valueManip = lambda x: x
 	if (key):
@@ -580,7 +588,7 @@ def main():
 	possibleArgs = {}
 	argList = argLists[function]
 	for i in range(0, len(argList)):
-		possibleArgs[argList[i][0]]=argList[i]
+		possibleArgs[argList[i][0]] = argList[i]
 
 	args = sys.argv[2:]
 
