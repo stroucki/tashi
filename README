@@ -1,6 +1,6 @@
-The Tashi project aims to build a software infrastructure for 
-cloud computing on massive internet-scale datasets (what we call 
-Big Data). The idea is to build a cluster management system 
-that enables the Big Data that are stored in a cluster/data center 
-to be accessed, shared, manipulated, and computed on by remote users 
+Tashi aims to be a versatile, easy to set up cluster management system,
+allowing the use, sharing and manipulation of cluster resources
 in a convenient, efficient, and safe manner.
+
+Tashi was originally just the virtual machine manager, and Zoni
+was the hardware manager, but both are now in Tashi together.

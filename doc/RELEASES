@@ -1,8 +1,12 @@
----+ Apache Tashi release policy
+---+ Tashi release policy
 
 This document is based on the draft incubator release management 
 document available at 
 http://incubator.apache.org/guides/releasemanagement.html
+
+Tashi has retired from the Apache incubator, but the build
+policy is still useful. Certain constants that pertain to Apache
+should be changed.
 
 ---++ Apache RAT testing
 
@@ -14,20 +18,20 @@ java -jar apache-rat-0.8/apache-rat-0.8.jar <top directory>
 
 ---++ Uploading artifacts
 
----+++ Distribution
+---+++ Distribution (needs update)
 
 The destination for an artifact is www.apache.org/dist/incubator/tashi . 
 This location is accessible at /www/www.apache.org/dist/incubator/tashi 
 on people.apache.org.
 
----+++ Mirroring
+---+++ Mirroring (needs update)
 
 Releases must be mirrored. Checksums, KEYS, signatures are mirrored too. 
 Per the release signing guide, the mirrored copies of these files are 
 non-authoritative. In-site links must point to the originals on 
 www.apache.org.
 
----+++ Archiving
+---+++ Archiving (needs update)
 
 All releases must be archived for future reference. Archives are stored 
 under http://archive.apache.org/dist/incubator/tashi. This archiving 
@@ -37,7 +41,10 @@ www.apache.org/dist/incubator/tashi.
 Old releases should be removed from www.apache.org/dist/incubator/tashi. 
 The release will then only remain on the archive server.
 
----+++ Permissions
+XXXstroucki: Github can treat tags as releases. Perhaps this can be
+used to replace the archives.
+
+---+++ Permissions (needs update)
 
 All files should be owned by the "incubator" group. Permissions should 
 be <user>:incubator 664, or <user>:incubator 775 respectively for 
@@ -47,14 +54,14 @@ directories.
 
 The KEYS file should contain the public keys for code signers. The 
 private key needs to be kept safe. Code-signing keys should be linked to 
-the Apache web of trust.
+a larger web of trust.
 
 ---+++ Modifications
 
 Uploaded artifacts must never be modified. Excluded from this policy are 
 README's, NOTES, KEYS and the like.
 
----++ Distribution checklist
+---++ Distribution checklist (needs update)
 
    * Destination: www.apache.org/dist/incubator/tashi
    * umask 022
@@ -64,7 +71,7 @@ README's, NOTES, KEYS and the like.
    * Links to KEYS, signatures and checksums point to www.apache.org
    * Package into .tar.gz
 
----++ Dealing with defects
+---++ Dealing with defects (needs update)
 
 Uploaded artifacts must never be modified (repeat). A new numbered 
 release should be generated. (Assume this will require a vote)
@@ -73,7 +80,7 @@ Serious defects may call for a release withdrawal by archiving,
 announcement on the mailing lists and adding a notice to the download 
 page.
 
----++ Release checklist
+---++ Release checklist (needs update)
 
    * Packages:
       * Artifacts unpack correctly?
@@ -105,11 +112,11 @@ page.
 
 ---++ Naming
 
-The release should be named apache-tashi-<version>-incubating. <version> 
+The release should be named tashi-<version>. <version> 
 should be a six-digit year-and-month, optionally followed by a period 
 and number in case of bug fixes applied to the base version.
 
----++ Guidelines
+---++ Guidelines (needs update)
 
 In case of need for additional guidance, the following mailing lists are 
 helpful:
@@ -117,12 +124,12 @@ helpful:
    * legal-discuss: for licensing issues
    * infrastructure-issues: for issues pertaining to release infrastructure
 
----++ Announcements
+---++ Announcements (needs update)
 
 Announce releases via apache.org address. Announcements should be plain
 text signed.
 
----++ Release procedure
+---++ Release procedure (needs update)
 
 Releases must be approved by Incubator PMC.
 
@@ -134,7 +141,3 @@ Should the PPMC vote pass, call for a vote on incubator.apache.org.
 Additionally to the above provide a link to the PPMC voting thread.
 
 Remove release candidate artifacts on conclusion of voting.
-
----++ Invocation
-
-Oh god...

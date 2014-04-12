@@ -1,6 +1,6 @@
 ---+ Installation on additional hosts
 
-To add additional hosts to the Apache Tashi cluster, they should be 
+To add additional hosts to the Tashi cluster, they should be 
 installed to satisfy the prerequisites as described in the main 
 installation document. However, only the node manager will have to be 
 launched on these hosts. There should be only one cluster manager and 
@@ -33,7 +33,7 @@ applies to these actions too.
 
 ---+ Deployment over multiple networks
 
-To add additional networks to the Apache Tashi cluster, they should be 
+To add additional networks to the Tashi cluster, they should be 
 brought to the hosts as VLAN network interfaces, attached to software 
 bridges. The new network will have to be registered with the cluster 
 manager, as detailed in the main installation document. Scheduling of 
