@@ -31,7 +31,7 @@ www.apache.org.
 
 All releases must be archived for future reference. Archives are stored 
 under http://archive.apache.org/dist/incubator/tashi. This archiving 
-happens automatially for all artifacts in 
+happens automatically for all artifacts in 
 www.apache.org/dist/incubator/tashi.
 
 Old releases should be removed from www.apache.org/dist/incubator/tashi. 
