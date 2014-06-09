@@ -459,6 +459,8 @@ class Qemu(VmControlInterface):
 		diskInterface = instance.hints.get("diskInterface", "ide")
 		# clean off whitespace
 		diskInterface = self.__stripSpace(diskInterface)
+		cachePolicy = instance.hints.get("cache", "off")
+		cachePolicy = self.__stripSpace(cachePolicy)
 
 		diskString = ""
 
@@ -481,7 +483,7 @@ class Qemu(VmControlInterface):
 				snapshot = "on"
 				migrate = "on"
 
-			thisDiskList.append("cache=off")
+			thisDiskList.append("cache=%s" %cachePolicy)
 
 			thisDiskList.append("snapshot=%s" % snapshot)
 
@@ -513,7 +515,7 @@ class Qemu(VmControlInterface):
 				thisDiskList = [ "file=/dev/%s/%s" % (self.scratchVg, scratchName) ]
 				thisDiskList.append("if=%s" % diskInterface)
 				thisDiskList.append("index=%d" % index)
-				thisDiskList.append("cache=off")
+				thisDiskList.append("cache=%s" %cachePolicy)
 				
 				# XXXstroucki force scratch disk to be
 				# persistent
